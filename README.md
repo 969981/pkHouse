@@ -551,6 +551,25 @@ The board attributes a deposit to an id kept in `sdmc:/config/pkHouse/gts_id.txt
 > **Warning:** a deposit is public. Anyone can browse it, download it and keep it, and taking it off the
 > board later does not reach copies people already have.
 
+### Phone view
+
+Your banks in a phone or PC browser, on the same Wi-Fi as the Switch: pkHouse shows a QR code, the phone
+scans it, and the page opens. Nothing to install on the other side.
+
+- **X** on the profile or game selector: every bank of every game, without choosing a game first
+- **Phone view** in the menu (+) of the box view: the same, plus the save you have open. The banks you
+  have open are shown as they are on screen, moves you have not saved yet included
+
+The page draws the boxes the way pkHouse does, in the theme and language the app is set to. Search by
+name (a nicknamed Pokemon is found by its species too), filter on shiny, alpha, Gigantamax and eggs, and
+tap a Pokemon for the same summary **X** shows on the Switch, icons included.
+
+It is read-only, and only served while its screen is open: **B** closes the screen and stops it. The
+address is `http://<the Switch's address>:8080/` (the next free port up to 8089 if 8080 is taken).
+
+> **Note:** the page has no password. While the screen is open, anyone on the same network who knows the
+> address can look at your banks.
+
 ### Updates
 
 pkHouse checks for a new release when it starts, in the background, so a slow or missing network
@@ -718,6 +737,18 @@ wondercards), and launch via a homebrew launcher. From then on pkHouse updates i
 | Browse, search or deposit | The board: 60 listings a page, the details bar under them |
 | <img src="screenshots/2.0/22-gts-search.jpg" width="420"> | <img src="screenshots/2.0/23-gts-deposit.jpg" width="420"> |
 | Searching the board | Picking a card to deposit, read before it is sent |
+
+### Phone view
+
+|  |
+|:--:|
+| <img src="screenshots/2.0/26-phone-view.jpg" width="866"> |
+| X on the game selector: scan the code, or type the address |
+
+|  |  |
+|:--:|:--:|
+| <img src="screenshots/2.0/27-phone-boxes.png" width="420"> | <img src="screenshots/2.0/28-phone-summary.png" width="420"> |
+| A bank in a PC browser | The summary, as on the Switch |
 
 ## Credits
 
