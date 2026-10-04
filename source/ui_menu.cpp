@@ -115,6 +115,7 @@ void UI::stepTheme(int dir) {
 void UI::openMenu() {
     showMenu_ = true;
     menuSelection_ = 0;
+    menuMarqueeStart_ = SDL_GetTicks();
 }
 
 void UI::moveMenuCursor(int dx, int dy) {
@@ -159,6 +160,7 @@ void UI::moveMenuCursor(int dx, int dy) {
         const int n = static_cast<int>(col[c].size());
         menuSelection_ = col[c][(pos + dy + n) % n];
     }
+    menuMarqueeStart_ = SDL_GetTicks();   // a long bank name starts from its beginning
 }
 
 void UI::handleMenuInput(const SDL_Event& event, bool& running) {
@@ -393,6 +395,7 @@ void UI::menuActivate(MenuId id, bool& running) {
 // --- Drawing -------------------------------------------------------------------
 
 void UI::drawMenuPopup() {
+    menuMarquee_ = false;
     // Over the box view it opened from, dimmed.
     drawRect(0, 0, SCREEN_W, SCREEN_H, SDL_Color{T().bg.r, T().bg.g, T().bg.b, 190});
 
@@ -618,23 +621,57 @@ void UI::drawMenuPopup() {
             SDL_RenderCopy(renderer_, t, nullptr, &dst);
             SDL_SetTextureColorMod(t, 255, 255, 255);
         }
-        // Right: a value, then a chevron.
+        // Right: a value, then a chevron. The title and its badge are laid
+        // out first and never cut; the value - a bank name - takes the room
+        // they leave, and scrolls when it is longer and the row is
+        // highlighted.
         const int chevX = rx + p.w - 16;
         fillArrow(static_cast<float>(chevX), rcy, 6, ArrowDir::Right, T().textDim);
-        int valueW = 0;
-        if (!value.empty()) {
-            const std::string v = fitText(value, fValue, 150);
-            valueW = textWidth(v, fValue);
-            drawText(v, chevX - 14 - valueW, rcy - TTF_FontHeight(fValue) / 2, T().textDim, fValue);
-            valueW += 14;
-        }
-        const int tx = rx + 46, room = chevX - 14 - valueW - tx;
+        const int tx = rx + 46;
         const int nameY = descKey ? ry + 9 : rcy - TTF_FontHeight(fName) / 2;
         int badgeW = 0;
         if (!badge.empty()) {
             TTF_Font* fB = uiFont(11, true);
             badgeW = measureTextTracked(badge, fB, 2) + 16 + 10;
         }
+        constexpr int VALUE_GAP = 16, VALUE_MIN = 60;
+        const int valueRight = chevX - 14;
+        int valueW = 0;
+        if (!value.empty()) {
+            // Only a title too long to leave even VALUE_MIN is shortened.
+            const int valueRoom = std::max(VALUE_MIN,
+                valueRight - (tx + textWidth(title, fName) + badgeW + VALUE_GAP));
+            const int fullW = textWidth(value, fValue);
+            const int vy = rcy - TTF_FontHeight(fValue) / 2;
+            if (fullW <= valueRoom) {
+                drawText(value, valueRight - fullW, vy, T().textDim, fValue);
+                valueW = fullW;
+            } else if (cur) {
+                // A loop: rest at the start, slide left until the next copy
+                // has taken its place, rest again.
+                constexpr int LOOP_GAP = 40;
+                constexpr uint32_t REST_MS = 1200;
+                constexpr float PX_PER_MS = 0.04f;
+                const int cycle = fullW + LOOP_GAP;
+                const uint32_t travelMs = static_cast<uint32_t>(cycle / PX_PER_MS);
+                const uint32_t phase = (SDL_GetTicks() - menuMarqueeStart_) % (REST_MS + travelMs);
+                const int off = phase < REST_MS ? 0 : static_cast<int>((phase - REST_MS) * PX_PER_MS);
+                const int vx = valueRight - valueRoom;
+                SDL_Rect clip = {vx, vy - 2, valueRoom, TTF_FontHeight(fValue) + 4};
+                SDL_RenderSetClipRect(renderer_, &clip);
+                drawText(value, vx - off, vy, T().textDim, fValue);
+                drawText(value, vx - off + cycle, vy, T().textDim, fValue);
+                SDL_RenderSetClipRect(renderer_, nullptr);
+                valueW = valueRoom;
+                menuMarquee_ = true;
+            } else {
+                const std::string v = fitText(value, fValue, valueRoom);
+                valueW = textWidth(v, fValue);
+                drawText(v, valueRight - valueW, vy, T().textDim, fValue);
+            }
+            valueW += VALUE_GAP;
+        }
+        const int room = valueRight - valueW - tx;
         const std::string t = fitText(title, fName, room - badgeW);
         drawText(t, tx, nameY, T().text, fName);
         if (!badge.empty()) {

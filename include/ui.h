@@ -670,6 +670,11 @@ private:
     bool   showDetail_ = false;
     bool   showMenu_   = false;
     int    menuSelection_ = 0;
+    // A bank name too long for its menu row scrolls while the row is
+    // highlighted. Set by the menu's draw when it scrolled something, so the
+    // run loop knows to keep drawing; restarted when the cursor moves.
+    bool     menuMarquee_ = false;
+    uint32_t menuMarqueeStart_ = 0;
     bool   saveNow_    = false;
     bool   showAbout_  = false;
     bool   showBoxView_   = false;

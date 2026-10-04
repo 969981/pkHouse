@@ -433,6 +433,9 @@ void UI::run(const std::string& basePath, const std::string& savePath) {
             offerUpdate(running);
             markDirty();
         }
+        // A long bank name scrolling in the menu needs the next frame.
+        if (showMenu_ && menuMarquee_ && screen_ == AppScreen::MainView)
+            markDirty();
         // If a popup just activated, skip drawing here — the popup branch
         // will handle it next iteration with dirty_ still set.
         if (dirty_ && !showAbout_) {
