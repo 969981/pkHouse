@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>pkHouse</title>
+<!-- Served by pkHouse on the Switch while its Phone view screen is open.
+     Self-contained: no CDN, the phone may have no internet. The colours below
+     are only a fallback: /api/sources sends the theme the app is using, and the
+     page takes it on, so it looks like the Switch screen next to it. -->
+<style>
+:root {
+  --bg: #16181d; --panel: #1f2229; --border: #2e323b; --divider: #2e323b;
+  --text: #eceae6; --dim: #a19c93; --muted: #767169;
+  --accent: #f0703a; --save: #f0703a; --bank: #2bb3a0;
+  --slot: #2a2e36; --slotEgg: #2f3330; --slotEmpty: #1b1e24; --cellBorder: #3a3f49; --cellEmptyBorder: #3a3f49;
+  --match: #f0703a; --badge: #3a2a22; --button: #2a2e36; --buttonBorder: #3a3f49;
+  --keyCap: #eceae6; --keyCapText: #16181d;
+  --male: #4f8fe8; --female: #e8578a; --red: #e0524a; --ok: #3fbf7f;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-text-size-adjust: 100%; }
+body { border-top: 4px solid var(--accent); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px calc(24px + env(safe-area-inset-bottom)); }
+button { font: inherit; color: inherit; }
+.caps { text-transform: uppercase; letter-spacing: 2px; font-size: 11px; font-weight: 700; color: var(--dim); }
+.mask { display: inline-block; background: currentColor;
+  -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
+.ico-shiny { --m: url(/icon/shiny.png); } .ico-alpha { --m: url(/icon/alpha.png); }
+.ico-dynamax { --m: url(/icon/dynamax.png); }
+.disc { border-radius: 50%; object-fit: cover; flex: none; background: var(--bg); }
+
+/* --- Box view ----------------------------------------------------------- */
+header.top { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 12px 0 10px; }
+.brand { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.brand .house { width: 22px; height: 22px; color: var(--accent); --m: url(/icon/house.png); }
+.brand b { font-size: 20px; }
+.brand span#ver { color: var(--muted); font-size: 13px; margin-left: auto; }
+select, input { width: 100%; font: inherit; color: var(--text); background: var(--panel);
+  border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.row { display: flex; gap: 8px; margin-top: 8px; }
+.row input { flex: 1; min-width: 0; }
+.row .chip { width: 42px; }
+.chip { flex: none; display: flex; align-items: center; justify-content: center; width: 46px;
+  border: 1px solid var(--buttonBorder); background: var(--button); border-radius: 10px; cursor: pointer; color: var(--muted); }
+.chip[hidden] { display: none; }
+.chip .mask { width: 18px; height: 18px; }
+.chip img { width: 26px; height: 26px; object-fit: contain; opacity: .6; filter: grayscale(1); }
+.chip[aria-pressed="true"] img { opacity: 1; filter: none; }
+.chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--badge); }
+
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; }
+.boxpanel { padding: 12px; max-width: 640px; margin: 4px auto 0; }
+.boxbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.boxbar button { flex: none; width: 40px; height: 36px; border-radius: 10px;
+  border: 1px solid var(--buttonBorder); background: var(--button); cursor: pointer; font-size: 18px; }
+.boxbar button:disabled { opacity: .35; cursor: default; }
+.boxname { flex: 1; text-align: center; min-width: 0; }
+.boxname .caps { display: block; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.boxname b { display: block; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.boxname small { color: var(--muted); }
+.grid { display: grid; gap: 6px; }
+.slot { position: relative; aspect-ratio: 87 / 72; border-radius: 10px; background: var(--slot);
+  border: 1px solid var(--cellBorder); display: flex; align-items: center; justify-content: center;
+  padding: 0; cursor: pointer; }
+.slot.egg { background: var(--slotEgg); }
+.slot.empty { background: var(--slotEmpty); border: 1px dashed var(--cellEmptyBorder); cursor: default; }
+.slot img.sp { width: 78%; height: 78%; object-fit: contain; }
+.slot .mask.ico-shiny { position: absolute; top: 7%; left: 6%; width: 15%; aspect-ratio: 1; color: var(--accent); }
+.slot img.alpha { position: absolute; top: 7%; right: 6%; width: 15%; }
+.slot.hit { box-shadow: 0 0 0 2px var(--match) inset; }
+.slot.dim::after { content: ""; position: absolute; inset: 0; border-radius: 10px; background: var(--bg); opacity: .7; }
+.dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-top: 12px; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--divider); cursor: pointer; }
+.dots i.on { background: var(--tagc, var(--accent)); }
+.dots i.has { box-shadow: 0 0 0 2px var(--match); }
+.results { margin: 14px auto 0; display: grid; gap: 6px; max-width: 640px; }
+.res { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; padding: 6px 10px; cursor: pointer; text-align: left; width: 100%; }
+.res img { width: 40px; height: 40px; object-fit: contain; }
+.res small { color: var(--muted); display: block; }
+.note { color: var(--muted); font-size: 13px; text-align: center; margin: 16px 0; }
+.err { color: var(--red); }
+
+/* --- Summary: the app's X screen, full screen ---------------------------- */
+#sum { position: fixed; inset: 0; z-index: 10; background: var(--bg); overflow: auto; display: none;
+  border-top: 4px solid var(--accent); }
+body.open #sum { display: block; }
+body.open { overflow: hidden; }
+.sum { max-width: 1240px; margin: 0 auto; padding: 14px 16px calc(28px + env(safe-area-inset-bottom)); }
+.shead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding-right: 48px; }
+.sname { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-width: 0; flex: 1 1 auto; }
+.sname .mask { width: 24px; height: 24px; color: var(--accent); align-self: center; flex: none; }
+.sname h1 { margin: 0; font-size: 32px; line-height: 1.1; }
+.sname h1.shiny { color: var(--accent); }
+.sname .sub { color: var(--dim); font-size: 15px; }
+.scluster { display: flex; align-items: center; gap: 16px; margin-left: auto; }
+.lv { display: flex; align-items: baseline; gap: 6px; }
+.lv small { color: var(--dim); }
+.lv b { font-size: 30px; line-height: 1; }
+.gender { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  font-size: 21px; font-weight: 700; }
+.ball { display: flex; align-items: center; gap: 8px; }
+.ball img { width: 22px; height: 22px; }
+.vrule { width: 1px; height: 36px; background: var(--divider); }
+.dex { font-size: 26px; font-weight: 700; }
+.where { display: inline-block; margin-top: 10px; background: var(--button); color: var(--dim);
+  font-size: 13px; font-weight: 700; border-radius: 8px; padding: 5px 10px; }
+/* The cross is two bars, not the "×" character: a glyph sits where the font
+   puts it, which is not the middle of the circle in every browser. */
+.close { position: fixed; top: 12px; right: 12px; z-index: 11; width: 40px; height: 40px; flex: none;
+  padding: 0; margin: 0; border-radius: 50%; border: 1px solid var(--buttonBorder); background: var(--button);
+  color: var(--text); cursor: pointer; display: none; appearance: none; -webkit-appearance: none; }
+.close::before, .close::after { content: ""; position: absolute; left: 50%; top: 50%; width: 16px; height: 2px;
+  border-radius: 1px; background: currentColor; }
+.close::before { transform: translate(-50%, -50%) rotate(45deg); }
+.close::after  { transform: translate(-50%, -50%) rotate(-45deg); }
+.close:hover { border-color: var(--accent); color: var(--accent); }
+body.open .close { display: block; }
+
+.scols { display: grid; gap: 18px; margin-top: 14px; }
+@media (min-width: 900px) { .scols { grid-template-columns: 611fr 564fr; gap: 25px; } }
+
+.portrait { padding: 18px; display: grid; gap: 18px; position: relative; overflow: hidden; }
+@media (min-width: 520px) { .portrait { grid-template-columns: 200px minmax(0, 1fr); } }
+.pleft { position: relative; display: flex; flex-direction: column; gap: 16px; }
+.badges { display: flex; gap: 8px; }
+.badge { width: 40px; height: 40px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center; color: var(--muted); }
+.badge.on { background: var(--badge); border-color: var(--accent); color: var(--accent); }
+.badge .mask { width: 20px; height: 20px; }
+.badge:not(.on) .mask, .badge:not(.on) img { opacity: .6; }
+.badge img { width: 28px; height: 28px; object-fit: contain; }
+.badge:not(.on) img { filter: grayscale(1); }
+.bigsprite { width: 200px; max-width: 100%; aspect-ratio: 1; border-radius: 24px; background: var(--slot);
+  display: flex; align-items: center; justify-content: center; }
+.bigsprite img { width: 88%; height: 88%; object-fit: contain; }
+.types { display: flex; flex-wrap: wrap; gap: 8px; }
+.tchip { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 14px 0 6px; border-radius: 16px;
+  background: var(--bg); border: 1px solid var(--border); font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+.tchip img { width: 20px; height: 20px; }
+.watermark { font-size: 110px; font-weight: 800; line-height: .8; color: var(--border); margin-top: auto; user-select: none; }
+.ribbons { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-height: 160px; }
+.ribbons ul { list-style: none; margin: 12px 0 0; padding: 0; max-height: 364px; overflow: auto; }
+.ribbons li { display: flex; align-items: center; gap: 10px; min-height: 26px; font-size: 14px; }
+.ribbons li img { width: 20px; height: 20px; flex: none; }
+.ribbons li.mark { color: var(--dim); }
+.ribbons .none { color: var(--muted); text-align: center; margin: 40px 0; font-size: 14px; }
+
+.attrs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (min-width: 560px) { .attrs { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); } }
+.attr .v { font-size: 19px; font-weight: 700; margin-top: 6px; display: flex; align-items: center; gap: 8px; }
+.attr .v.none { color: var(--muted); }
+.attr .v img { width: 22px; height: 22px; }
+.attr small { color: var(--dim); font-size: 13px; }
+.moves { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 20px; }
+@media (min-width: 480px) { .moves { grid-template-columns: 1fr 1fr; } }
+.move { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 15px 0 12px; border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--border); min-width: 0; }
+.move img { width: 24px; height: 24px; }
+.move .n { flex: 1; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.move .t { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--dim); }
+.move.empty .n { color: var(--muted); padding-left: 34px; }
+
+.stats { display: grid; gap: 18px; margin-top: 22px; }
+@media (min-width: 560px) { .stats { grid-template-columns: 300px 1fr; } }
+.stathead { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px; }
+.perfect { background: var(--badge); color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  border-radius: 12px; padding: 3px 10px; }
+.radar { width: 100%; max-width: 300px; display: block; margin: 0 auto; overflow: visible; }
+.radar text { font-size: 12px; font-weight: 700; fill: var(--dim); }
+.radar text .val { fill: var(--text); }
+.evs .total { color: var(--dim); font-size: 13px; }
+.evs .total.over { color: var(--red); }
+.evrow { display: grid; grid-template-columns: auto 1fr 36px; align-items: center; gap: 14px; height: 30px; }
+.evrow b { font-size: 13px; text-transform: uppercase; white-space: nowrap; }
+.evrow .bar { height: 8px; border-radius: 4px; background: var(--button); overflow: hidden; }
+.evrow .bar i { display: block; height: 100%; border-radius: 4px; background: var(--bank); }
+.evrow span { text-align: right; font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+.evrow span.zero { color: var(--muted); }
+
+.prov { border-top: 1px solid var(--border); margin-top: 20px; padding-top: 14px; display: flex; flex-wrap: wrap; gap: 14px 36px; }
+.prov .v { font-size: 16px; font-weight: 700; margin-top: 4px; }
+.prov .v small { color: var(--dim); font-weight: 400; font-size: 13px; margin-left: 8px; }
+.tech { color: var(--muted); font-size: 13px; margin-top: 14px; word-spacing: 6px; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="mask house"></span><b>pkHouse</b><span id="ver"></span></div>
+    <select id="src" aria-label="Bank"></select>
+    <div class="row">
+      <input id="q" type="search" placeholder="Search" autocomplete="off" aria-label="Search">
+      <button class="chip" data-f="s" aria-pressed="false"><span class="mask ico-shiny"></span></button>
+      <button class="chip" data-f="a" aria-pressed="false" hidden><span class="mask ico-alpha"></span></button>
+      <button class="chip" data-f="x" aria-pressed="false" hidden><span class="mask ico-dynamax"></span></button>
+      <button class="chip" data-f="e" aria-pressed="false"><img alt="" src="/sprite/0-0.png"></button>
+    </div>
+  </header>
+  <main id="main"><p class="note">…</p></main>
+</div>
+
+<button class="close" id="close" aria-label="Close"></button>
+<div id="sum" role="dialog" aria-modal="true"></div>
+
+<script>
+"use strict";
+// Every word on the page comes from the Switch, in the app's language
+// (/api/sources "labels"). These are only for before that answer arrives, or
+// when it never does.
+const FALLBACK = { search: "Search", box: "Box", of: "of", empty: "No banks yet.", noMatch: "Nothing matches.",
+  matches: "matches", loading: "Loading...", lost: "The Switch stopped answering. Open Phone view on it again, then reload this page." };
+let L = FALLBACK;
+
+const $ = (id) => document.getElementById(id);
+// Mark filters, combined: shiny + alpha means shiny alphas. Keyed like the
+// slot fields: s shiny, a alpha, x Gigantamax, e egg.
+const state = { sources: [], src: null, data: null, box: 0, q: "", only: new Set() };
+const FILTER_LABEL = { s: "shiny", a: "alpha", x: "gmax", e: "egg" };
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function fmt(t, ...a) { return String(t ?? "").replace(/\{(\d)\}/g, (_, i) => a[+i] ?? ""); }
+function sprite(p) {
+  if (p.e) return "/sprite/0-0.png";
+  return (p.s ? "/shiny/" : "/sprite/") + p.i + "-" + p.f + ".png";
+}
+async function get(url) {
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+function lost() { $("main").innerHTML = '<p class="note err">' + esc(L.lost) + "</p>"; }
+
+// --- sources -----------------------------------------------------------------
+
+async function init() {
+  let info;
+  try { info = await get("/api/sources"); } catch (e) { lost(); return; }
+  L = Object.assign({}, FALLBACK, info.labels || {});
+  document.documentElement.lang = info.lang || "en";
+  for (const [k, v] of Object.entries(info.theme || {}))
+    document.documentElement.style.setProperty("--" + k, v);
+  $("q").placeholder = L.search;
+  $("ver").textContent = info.version;
+  state.sources = info.sources;
+
+  const sel = $("src");
+  let group = null, og = null;
+  for (const s of info.sources) {
+    if (s.group !== group) {
+      og = document.createElement("optgroup");
+      og.label = s.group;
+      sel.appendChild(og);
+      group = s.group;
+    }
+    const o = document.createElement("option");
+    o.value = s.id;
+    o.textContent = (s.kind === "save" ? L.save + " · " : "") + s.name + " (" + s.count + ")";
+    og.appendChild(o);
+  }
+  sel.onchange = () => openSource(+sel.value);
+  if (info.sources.length) openSource(info.sources[0].id);
+  else $("main").innerHTML = '<p class="note">' + esc(L.empty) + "</p>";
+}
+
+async function openSource(id) {
+  state.src = id;
+  $("src").value = id;
+  $("main").innerHTML = '<p class="note">' + esc(L.loading) + "</p>";
+  try { state.data = await get("/api/box?src=" + id); } catch (e) { lost(); return; }
+  updateChips();
+  const first = state.data.boxes.findIndex(b => b.slots.some(Boolean));
+  state.box = first < 0 ? 0 : first;
+  render();
+}
+
+// --- search ------------------------------------------------------------------
+
+function matches(p) {
+  if (!p) return false;
+  for (const f of state.only) if (!p[f]) return false;
+  if (!state.q) return true;
+  return String(p.n).toLowerCase().includes(state.q) || String(p.sp || "").toLowerCase().includes(state.q);
+}
+function filtering() { return state.q !== "" || state.only.size > 0; }
+
+// --- box view: the app's cells, shiny top-left, alpha top-right -------------------
+
+function slotHtml(p, i) {
+  if (!p) return '<div class="slot empty"></div>';
+  const cls = (p.e ? " egg" : "") + (filtering() ? (matches(p) ? " hit" : " dim") : "");
+  return '<button class="slot' + cls + '" data-i="' + i + '" title="' + esc(p.n) + (p.e ? "" : " · " + esc(L.lv) + " " + p.l) + '">' +
+    '<img class="sp" loading="lazy" alt="' + esc(p.n) + '" src="' + sprite(p) + '">' +
+    (p.s ? '<span class="mask ico-shiny"></span>' : "") +
+    (p.a ? '<img class="alpha" alt="" src="/icon/alpha.png">' : "") + "</button>";
+}
+
+function render() {
+  const d = state.data;
+  if (!d) return;
+  const box = d.boxes[state.box];
+  const filled = box.slots.filter(Boolean).length;
+  const tagc = d.kind === "save" ? "var(--save)" : "var(--bank)";
+  let html = '<div class="panel boxpanel" style="--tagc:' + tagc + '"><div class="boxbar">' +
+    '<button id="prev" aria-label="Previous box">‹</button>' +
+    '<div class="boxname"><span class="caps" style="color:' + tagc + '">' + esc(d.kind === "save" ? L.save : L.bank) + " · " + esc(d.name) + "</span>" +
+    "<b>" + esc(box.name) + "</b><small>" + esc(L.box) + " " + (state.box + 1) + " " + esc(L.of) + " " + d.boxes.length +
+    " · " + filled + "/" + box.slots.length + "</small></div>" +
+    '<button id="next" aria-label="Next box">›</button></div>';
+  html += '<div class="grid" style="grid-template-columns:repeat(' + d.cols + ',1fr)">' + box.slots.map(slotHtml).join("") + "</div>";
+  html += '<div class="dots">';
+  d.boxes.forEach((b, i) => {
+    const has = filtering() && b.slots.some(matches);
+    html += '<i data-b="' + i + '" class="' + (i === state.box ? "on" : "") + (has ? " has" : "") + '"></i>';
+  });
+  html += "</div></div>";
+
+  // Searching lists every match in the bank, not only this box's.
+  if (filtering()) {
+    const hits = [];
+    d.boxes.forEach((b, bi) => b.slots.forEach((p, si) => { if (matches(p)) hits.push([bi, si, p]); }));
+    html += '<p class="note">' + (hits.length ? hits.length + " " + esc(L.matches) : esc(L.noMatch)) + "</p>";
+    html += '<div class="results">';
+    for (const [bi, si, p] of hits.slice(0, 200)) {
+      html += '<button class="res" data-b="' + bi + '" data-s="' + si + '"><img loading="lazy" alt="" src="' + sprite(p) + '">' +
+        "<span><b>" + esc(p.n) + "</b>" +
+        "<small>" + esc(d.boxes[bi].name) + " · " + (si + 1) + (p.e ? "" : " · " + esc(L.lv) + " " + p.l) + "</small></span></button>";
+    }
+    html += "</div>";
+  }
+
+  $("main").innerHTML = html;
+  $("prev").disabled = state.box === 0;
+  $("next").disabled = state.box === d.boxes.length - 1;
+  $("prev").onclick = () => step(-1);
+  $("next").onclick = () => step(+1);
+}
+
+function step(dir) {
+  const n = state.data.boxes.length;
+  const next = Math.min(n - 1, Math.max(0, state.box + dir));
+  if (next !== state.box) { state.box = next; render(); }
+}
+
+$("main").addEventListener("click", (e) => {
+  const slot = e.target.closest(".slot[data-i]");
+  if (slot) { openSummary(state.box, +slot.dataset.i); return; }
+  const dot = e.target.closest(".dots i");
+  if (dot) { state.box = +dot.dataset.b; render(); return; }
+  const res = e.target.closest(".res");
+  if (res) { state.box = +res.dataset.b; render(); openSummary(+res.dataset.b, +res.dataset.s); }
+});
+
+// Swipe between boxes, like L / R on the Switch.
+let touchX = null, touchY = null;
+$("main").addEventListener("touchstart", (e) => { touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; }, { passive: true });
+$("main").addEventListener("touchend", (e) => {
+  if (touchX === null || !e.target.closest(".grid")) { touchX = null; return; }
+  const dx = e.changedTouches[0].clientX - touchX, dy = e.changedTouches[0].clientY - touchY;
+  touchX = null;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) step(dx < 0 ? +1 : -1);
+});
+document.addEventListener("keydown", (e) => {
+  if (document.body.classList.contains("open")) {
+    if (e.key === "Escape") closeSummary();
+    if (e.key === "ArrowLeft") stepSummary(-1);
+    if (e.key === "ArrowRight") stepSummary(+1);
+    return;
+  }
+  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  if (e.key === "ArrowLeft") step(-1);
+  if (e.key === "ArrowRight") step(+1);
+});
+
+$("q").addEventListener("input", () => { state.q = $("q").value.trim().toLowerCase(); render(); });
+for (const chip of document.querySelectorAll(".chip[data-f]")) {
+  chip.onclick = () => {
+    const f = chip.dataset.f;
+    if (state.only.has(f)) state.only.delete(f); else state.only.add(f);
+    chip.setAttribute("aria-pressed", state.only.has(f));
+    render();
+  };
+}
+
+// Alpha and Gigantamax only where the game has them; a filter that no longer
+// applies is dropped rather than left hiding everything.
+function updateChips() {
+  const show = { s: true, e: true, a: !!(state.data && state.data.hasAlpha), x: !!(state.data && state.data.hasGmax) };
+  for (const chip of document.querySelectorAll(".chip[data-f]")) {
+    const f = chip.dataset.f;
+    chip.hidden = !show[f];
+    if (!show[f] && state.only.has(f)) { state.only.delete(f); chip.setAttribute("aria-pressed", "false"); }
+    chip.title = L[FILTER_LABEL[f]] || "";
+    chip.setAttribute("aria-label", chip.title);
+  }
+}
+
+// --- summary: the app's X screen ---------------------------------------------------
+
+let current = null;   // [box, slot] on screen
+
+// IV hexagon, clockwise from the top as in the app: HP, Atk, Def, Spe, SpD, SpA.
+// The API's arrays are in Showdown order (HP, Atk, Def, SpA, SpD, Spe).
+const RADAR_ORDER = [0, 1, 2, 5, 4, 3];
+const COS = [0, 0.866025, 0.866025, 0, -0.866025, -0.866025];
+const SIN = [-1, -0.5, 0.5, 1, 0.5, -0.5];
+
+function radarSvg(p) {
+  const cx = 150, cy = 130, R = 78;
+  const pt = (i, s) => [cx + R * s * COS[i], cy + R * s * SIN[i]];
+  const poly = (s) => [0, 1, 2, 3, 4, 5].map(i => pt(i, s).join(",")).join(" ");
+  let svg = '<svg class="radar" viewBox="0 0 300 260" role="img" aria-label="' + esc(L.ivs) + '">';
+  for (const s of [1 / 3, 2 / 3, 1]) svg += '<polygon points="' + poly(s) + '" fill="none" stroke="var(--border)"/>';
+  for (let i = 0; i < 6; i++) { const [x, y] = pt(i, 1); svg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + x + '" y2="' + y + '" stroke="var(--border)"/>'; }
+  const vals = RADAR_ORDER.map(k => p.ivs[k]);
+  const pts = vals.map((v, i) => pt(i, Math.min(1, v / 31)));
+  svg += '<polygon points="' + pts.map(q => q.join(",")).join(" ") + '" fill="var(--bank)" fill-opacity=".28" stroke="var(--bank)" stroke-width="1.5"/>';
+  pts.forEach((q, i) => { svg += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="4" fill="' + (vals[i] === 31 ? "var(--accent)" : "var(--bank)") + '"/>'; });
+  vals.forEach((v, i) => {
+    const name = (L.stats || [])[RADAR_ORDER[i]] || "";
+    const x = cx + (R + 14) * COS[i], y = cy + (R + 14) * SIN[i];
+    const anchor = COS[i] > 0.1 ? "start" : COS[i] < -0.1 ? "end" : "middle";
+    const dy = SIN[i] < -0.9 ? -4 : SIN[i] > 0.9 ? 12 : 4;
+    svg += '<text x="' + x + '" y="' + (y + dy) + '" text-anchor="' + anchor + '">' + esc(name.toUpperCase()) + ' <tspan class="val">' + v + "</tspan></text>";
+  });
+  return svg + "</svg>";
+}
+
+function ribbonsHtml(p) {
+  const marks = p.ribbons.filter(r => r.mark).length, plain = p.ribbons.length - marks;
+  const parts = [];
+  if (plain) parts.push(fmt(plain === 1 ? L.ribbonOne : L.ribbonMany, plain));
+  if (marks) parts.push(fmt(marks === 1 ? L.markOne : L.markMany, marks));
+  const title = parts.length ? parts.join(" · ") : fmt(L.ribbons, 0);
+  let h = '<div class="ribbons"><div class="caps">' + esc(title) + "</div>";
+  if (!p.ribbons.length) return h + '<div class="none">' + esc(L.noRibbons) + "</div></div>";
+  h += "<ul>" + p.ribbons.map(r => '<li class="' + (r.mark ? "mark" : "") + '"><img loading="lazy" alt="" src="/ribbon/' +
+    encodeURIComponent(r.file) + '.png">' + esc(r.name) + "</li>").join("") + "</ul></div>";
+  return h;
+}
+
+function summaryHtml(p, slot, b, s) {
+  const d = state.data;
+  // Header: shiny mark, species, nickname and form; then level, gender, ball, dex.
+  const sub = [p.nickname ? "“" + p.nickname + "”" : "", p.formName || ""].filter(Boolean).join(" · ");
+  let h = '<div class="sum"><div class="shead">' +
+    '<div class="sname">' + (p.shiny ? '<span class="mask ico-shiny"></span>' : "") +
+    '<h1 class="' + (p.shiny ? "shiny" : "") + '">' + esc(p.speciesName) + "</h1>" +
+    (sub ? '<span class="sub">' + esc(sub) + "</span>" : "") + "</div>" +
+    '<div class="scluster">' +
+    '<div class="lv"><small>' + esc(L.lv) + "</small><b>" + p.level + "</b></div>";
+  if (p.gender === 0 || p.gender === 1) {
+    const c = p.gender === 0 ? "var(--male)" : "var(--female)";
+    h += '<div class="gender" style="color:' + c + ';background:color-mix(in srgb,' + c + ' 16%,transparent)">' + (p.gender === 0 ? "♂" : "♀") + "</div>";
+  }
+  if (p.ballName) h += '<div class="ball"><img alt="" src="/ball/' + p.ball + '.png">' + esc(p.ballName) + "</div>";
+  h += '<div class="vrule"></div><div class="dex">#' + String(p.species).padStart(4, "0") + "</div></div></div>";
+
+  // Where it is: "Bank · Box name · 3 / 26".
+  const occupied = d.boxes[b].slots.map((q, i) => q ? i : -1).filter(i => i >= 0);
+  h += '<div class="where">' + esc(d.kind === "save" ? L.save : L.bank) + " · " + esc(d.boxes[b].name) +
+    " · " + (occupied.indexOf(s) + 1) + " / " + occupied.length + "</div>";
+
+  h += '<div class="scols">';
+
+  // Portrait panel: badges, sprite, types, dex watermark; the ribbon list beside.
+  const badge = (on, inner) => '<div class="badge' + (on ? " on" : "") + '">' + inner + "</div>";
+  h += '<section class="panel portrait"><div class="pleft">' +
+    '<div class="badges">' +
+    badge(p.shiny, '<span class="mask ico-shiny"></span>') +
+    badge(p.alpha, '<span class="mask ico-alpha"></span>') +
+    badge(p.gmax, p.gmax ? '<img alt="" src="/icon/dynamax.png">' : '<span class="mask ico-dynamax"></span>') +
+    badge(p.egg, '<img alt="" src="/sprite/0-0.png">') + "</div>" +
+    '<div class="bigsprite"><img alt="" src="' + sprite(slot) + '"></div>';
+  if (p.types && p.types.length)
+    h += '<div class="types">' + p.types.map(t => '<span class="tchip"><img class="disc" alt="" src="/type/' + t.id + '.png">' + esc(t.name) + "</span>").join("") + "</div>";
+  h += '<div class="watermark">' + p.species + "</div></div>" + ribbonsHtml(p) + "</section>";
+
+  // Right column: attributes, moves, IVs and EVs.
+  h += "<section>";
+  const attrs = [];
+  attrs.push('<div class="attr"><div class="caps">' + esc(L.nature) + '</div><div class="v">' + esc(p.nature) + "</div>" +
+    (p.natureUp ? "<small>+" + esc(p.natureUp) + "  −" + esc(p.natureDown) + "</small>" : "") + "</div>");
+  attrs.push('<div class="attr"><div class="caps">' + esc(L.ability) + '</div><div class="v">' + esc(p.ability) + "</div></div>");
+  attrs.push('<div class="attr"><div class="caps">' + esc(L.item) + '</div><div class="v' + (p.item ? "" : " none") + '">' + esc(p.item || L.none) + "</div></div>");
+  if (p.tera)
+    attrs.push('<div class="attr"><div class="caps">' + esc(L.tera) + '</div><div class="v"><img class="disc" alt="" src="/type/' + p.tera.id + '.png">' + esc(p.tera.name) + "</div></div>");
+  h += '<div class="attrs" style="--n:' + attrs.length + '">' + attrs.join("") + "</div>";
+
+  h += '<div class="moves">' + p.moves.map(m => m
+    ? '<div class="move">' + (m.type ? '<img class="disc" alt="" src="/type/' + m.type.id + '.png">' : "") +
+      '<span class="n">' + esc(m.name) + "</span>" + (m.type ? '<span class="t">' + esc(m.type.name) + "</span>" : "") + "</div>"
+    : '<div class="move empty"><span class="n">---</span></div>').join("") + "</div>";
+
+  const perfect = p.ivs.filter(v => v === 31).length;
+  const evTotal = p.evs.reduce((a, v) => a + v, 0);
+  h += '<div class="stats"><div><div class="stathead"><span class="caps">' + esc(L.ivs) + '</span><span class="perfect">' +
+    esc(fmt(L.perfect, perfect)) + "</span></div>" + radarSvg(p) + "</div>";
+  h += '<div class="evs"><div class="stathead"><span class="caps">' + esc(L.evs) + '</span><span class="total' + (evTotal > 510 ? " over" : "") + '">' +
+    evTotal + " / 510</span></div>";
+  p.evs.forEach((v, i) => {
+    const w = v > 0 ? Math.max(3, Math.min(v, 252) / 252 * 100) : 0;
+    h += '<div class="evrow"><b>' + esc((L.stats || [])[i] || "") + '</b><div class="bar"><i style="width:' + w + '%"></i></div>' +
+      '<span class="' + (v ? "" : "zero") + '">' + v + "</span></div>";
+  });
+  h += "</div></div></section></div>";
+
+  // Provenance and identifiers.
+  const field = (label, value, trail) => value
+    ? '<div><div class="caps">' + esc(label) + '</div><div class="v">' + esc(value) + (trail ? "<small>" + esc(trail) + "</small>" : "") + "</div></div>" : "";
+  h += '<div class="prov">' +
+    field(L.ot, p.ot, p.tid + " / " + p.sid) +
+    ("ht" in p ? field(L.ht, p.ht || L.none) : "") +
+    field(L.origin, p.origin) + field(L.met, p.metOn) + field(L.location, p.metAt) + field(L.lang, p.lang) + "</div>";
+  h += '<div class="tech">' + esc(p.tech) + "</div></div>";
+  return h;
+}
+
+async function openSummary(b, s) {
+  const slot = state.data.boxes[b].slots[s];
+  if (!slot) return;
+  let p;
+  try { p = await get("/api/pkm?src=" + state.src + "&b=" + b + "&s=" + s); } catch (e) { lost(); return; }
+  current = [b, s];
+  $("sum").innerHTML = summaryHtml(p, slot, b, s);
+  $("sum").scrollTop = 0;
+  document.body.classList.add("open");
+}
+
+// L / R in the app's summary: the next Pokemon in the same box.
+function stepSummary(dir) {
+  if (!current) return;
+  const [b, s] = current;
+  const slots = state.data.boxes[b].slots;
+  for (let i = s + dir; i >= 0 && i < slots.length; i += dir)
+    if (slots[i]) { openSummary(b, i); return; }
+}
+
+function closeSummary() { document.body.classList.remove("open"); current = null; }
+$("close").onclick = closeSummary;
+
+// Swipe on the summary: left / right for the next Pokemon.
+let sumX = null, sumY = null;
+$("sum").addEventListener("touchstart", (e) => { sumX = e.touches[0].clientX; sumY = e.touches[0].clientY; }, { passive: true });
+$("sum").addEventListener("touchend", (e) => {
+  if (sumX === null || e.target.closest(".ribbons ul")) { sumX = null; return; }
+  const dx = e.changedTouches[0].clientX - sumX, dy = e.changedTouches[0].clientY - sumY;
+  sumX = null;
+  if (Math.abs(dx) > 70 && Math.abs(dx) > 2 * Math.abs(dy)) stepSummary(dx < 0 ? +1 : -1);
+});
+
+init();
+</script>
+</body>
+</html>

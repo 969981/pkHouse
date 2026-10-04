@@ -51,6 +51,10 @@ std::vector<UI::MenuItem> UI::menuItems() const {
     // tall as it was, and a sort would drop the selection anyway.
     if (selectedSlots_.empty() && canSortHere())
         items.push_back({MenuId::SortBank, 0});
+    // Phone view gives way to the exports the same way, so the column never
+    // grows past the height it has with a selection.
+    if (selectedSlots_.empty())
+        items.push_back({MenuId::PhoneView, 0});
     if (dual) {
         items.push_back({MenuId::SwitchLeft, 0});
         items.push_back({MenuId::SwitchRight, 0});
@@ -260,6 +264,10 @@ void UI::menuActivate(MenuId id, bool& running) {
     case MenuId::SortBank:
         showMenu_ = false;
         showSortDialog();
+        return;
+    case MenuId::PhoneView:
+        showMenu_ = false;
+        showPhoneView();
         return;
     case MenuId::ImportCard:
         showMenu_ = false;
@@ -595,6 +603,7 @@ void UI::drawMenuPopup() {
                 title = i18n::fmt(StrKey::MenuExportCards, std::to_string(selectedSlots_.size())); break;
             case MenuId::ImportCard:  iconName = "import"; titleKey = StrKey::MenuImportCard; descKey = StrKey::MenuDescImport; break;
             case MenuId::SortBank:    iconName = "sort";   titleKey = StrKey::MenuSort;       descKey = StrKey::MenuDescSort;   break;
+            case MenuId::PhoneView:   iconName = "phone";  titleKey = StrKey::MenuPhone;      descKey = StrKey::MenuDescPhone;  break;
             case MenuId::SwitchBank:  iconName = "bank";   titleKey = StrKey::MenuSwitchBank; value = activeBankName_; break;
             case MenuId::SwitchLeft:  iconName = "bank";   titleKey = StrKey::MenuSwitchBank; value = leftBankName_;
                 badge = i18n::get(StrKey::BsTagLeft); break;

@@ -8,6 +8,7 @@
 #include "card_import.h"
 #include "gts.h"
 #include "update.h"
+#include "web_server.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>
@@ -42,6 +43,7 @@ struct ConfirmStyle {
 };
 
 namespace SaveBackup { struct Entry; struct Summary; }
+struct PhoneSession;   // source/ui_phone.cpp
 
 // One page of a series shown once (the first-launch tour; later "What's new"):
 // an icon from romfs:/icons/ in a colour, a title, and a body whose '\n'
@@ -855,7 +857,7 @@ private:
     // "leave" items of save + bank or of dual bank. Left column tools and
     // destinations, right column settings and leaving.
     enum class MenuId {
-        Search, Wondercard, ExportPk, ExportCards, ImportCard, SortBank,
+        Search, Wondercard, ExportPk, ExportCards, ImportCard, SortBank, PhoneView,
         SwitchBank, SwitchLeft, SwitchRight, ChangeGame,
         Theme, Language, SaveQuit, QuitNoSave, SaveBanks, ChangeGameNoSave,
     };
@@ -867,6 +869,13 @@ private:
     bool canSortHere() const;
     Bank* sortTargetBank();
     void showSortDialog();
+    // Phone view (source/ui_phone.cpp): a page on the local network showing
+    // the save and every bank, read-only, served only while its screen is
+    // open - the + menu opens it, B closes it and the server with it.
+    void showPhoneView();
+    void drawPhoneView(const std::string& url, const uint8_t* qrcode,
+                       const WebServer& server);
+    WebServer::Response phoneRoute(PhoneSession& session, const WebServer::Request& req);
     void moveMenuCursor(int dx, int dy);
     void openMenu();
     bool confirmDiscard();

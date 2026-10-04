@@ -208,10 +208,11 @@ void UI::drawProfileSelectorFrame() {
 
     const ButtonHint hints[] = {
         {"A", StrKey::HintSelect2},
+        {"X", StrKey::HintPhone},
         {"-", StrKey::HintAbout},
         {"+", StrKey::HintQuit},
     };
-    drawFooterBar(hints, 3);
+    drawFooterBar(hints, 4);
 }
 
 void UI::handleProfileSelectorInput(bool& running) {
@@ -247,6 +248,9 @@ void UI::handleProfileSelectorInput(bool& running) {
                     break;
                 case SDL_CONTROLLER_BUTTON_B: // Switch A = select
                     selectProfile(profileSelCursor_);
+                    break;
+                case SDL_CONTROLLER_BUTTON_Y: // Switch X = phone view
+                    showPhoneView();
                     break;
                 case SDL_CONTROLLER_BUTTON_BACK: // - = about
                     showAbout_ = true;
@@ -1134,6 +1138,7 @@ void UI::drawGameSelectorFrame() {
     hints[n++] = {"B", selectedProfile_ >= 0 ? StrKey::HintBack : StrKey::HintQuit};
     if (!onTiles && count > 0 && selectedProfile_ >= 0 && !appletMode_)
         hints[n++] = {"Y", StrKey::HintBackups};
+    hints[n++] = {"X", StrKey::HintPhone};
     hints[n++] = {"-", StrKey::HintAbout};
     if (selectedProfile_ >= 0)
         hints[n++] = {"+", StrKey::HintQuit};
@@ -1351,6 +1356,9 @@ void UI::handleGameSelectorInput(bool& running) {
                     if (!gameSelOnGts_ && !gameSelOnAllBanks_ && count > 0
                         && selectedProfile_ >= 0 && !appletMode_)
                         showBackupManager(availableGames_[gameSelList_[gameSelCursor_]]);
+                    break;
+                case SDL_CONTROLLER_BUTTON_Y: // Switch X = phone view, before any game
+                    showPhoneView();
                     break;
                 case SDL_CONTROLLER_BUTTON_START:
                     if (confirmQuit()) running = false;
